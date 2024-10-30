@@ -1,35 +1,76 @@
-// requerimientos de la aplicación
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-
-
-
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDmIgzgxUO5ZMcZEOic7bsNQgoqKIvxXY4",
-  authDomain: "foodbankds.firebaseapp.com",
-  projectId: "foodbankds",
-  storageBucket: "foodbankds.appspot.com",
-  messagingSenderId: "729077541683",
-  appId: "1:729077541683:web:be1be0635cb043dae8ec46"
-};
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-
-
-
-
+export default function App() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Hola !!</Text>
+      <Text style={styles.subtitle}>Inicia Sesión con tu cuenta </Text>
+      <TextInput
+        style={styles.textInput}
+        placeholder="foodbank@gmail.com"
+      />
+      <TextInput
+        style={styles.textInput}
+        placeholder="********"
+      />
+      <TouchableOpacity style={styles.button}>
+        <LinearGradient
+          colors={['#E20429', '#FABB01']}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.gradientButton}
+        >
+          <Text style={styles.textButton}>Iniciar Sesión</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+      <StatusBar style="auto" />
+    </View>
+  );
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f1f1f1',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  title: {
+    fontSize: 40,
+    color: '#3434D',
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: 'gray',
+  },
+  textInput: {
+    padding: 10,
+    paddingStart: 30,
+    width: '80%',
+    height: 50,
+    marginTop: 20,
+    borderRadius: 30,
+    backgroundColor: 'white',
+  },
+  textButton: {
+    color: 'white',
+    fontSize: 15, // Tamaño del texto reducido para adaptarse al botón más pequeño
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  button: {
+    width: '50%', // Ancho reducido
+    height: 40,   // Altura reducida
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginTop: 20,
+  },
+  gradientButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
