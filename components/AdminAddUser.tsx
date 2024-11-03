@@ -19,7 +19,8 @@ export default function AdminAddUser({ navigation }) {
       if (user) {
         const userDoc = await getDoc(doc(firestore, 'users', user.uid));
         if (userDoc.exists()) {
-          setIsAdmin(userDoc.data().role === 'admin');
+            console.log(userDoc.data());
+            setIsAdmin(userDoc.data().role === 'admin');
         }
       }
       setLoading(false);
