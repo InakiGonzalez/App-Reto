@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { db } from '../firebase-config';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, Firestore } from 'firebase/firestore';
 
 export default function AddProductScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -10,22 +10,22 @@ export default function AddProductScreen({ navigation }) {
   const [quantity, setQuantity] = useState('');
 
   const handleAddProduct = async () => {
-    try {
-      if (!name || !imageUrl || !quantity) {
-        Alert.alert('Error', 'Please fill in all fields.');
-        return;
-      }
+    if (name === '' || imageUrl === '' || quantity === '') {
+      Alert.alert('Error', 'Please fill all the fields');
+      return;
+    }
 
-      await addDoc(collection(db, 'inventory'), {
+    try {
+      await addDoc(collection(db, 'inventory-item'), {
         name,
         imageUrl,
-        quantity: parseInt(quantity),
+        quantity: parseInt(quantity, 10),
       });
-
-      Alert.alert('Success', 'Product added successfully!');
+      Alert.alert('Success', 'Product added successfully');
       navigation.goBack();
     } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error', 'Failed to add product');
+      console.error(error.message);
     }
   };
 
