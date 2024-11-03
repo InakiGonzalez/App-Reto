@@ -142,20 +142,19 @@
 // src/App.tsx
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from './components/LoginScreen';
-import HomeScreen from './components/HomeScreen';
+//import { initializeApp } from 'firebase/app';
+import app from './firebase-config';
+//import { getAuth } from 'firebase/auth';
+import Navigation from './Navigation';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
-// Crear el stack de navegación
-const Stack = createNativeStackNavigator();
 
+//const auth = getAuth(app);
+// No es necesario poner el navigation stack aquí, va en navigation.tsx (cambio #1, 02/11)
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Inicio' }} />
-      </Stack.Navigator>
+      <Navigation /> 
     </NavigationContainer>
   );
 }

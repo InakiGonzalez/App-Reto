@@ -25,6 +25,7 @@ export default function AdminAddUser({ navigation }) {
       setLoading(false);
     };
 
+    
     onAuthStateChanged(auth, (user) => {
       if (user) checkAdmin();
       else setLoading(false);

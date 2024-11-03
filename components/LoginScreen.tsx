@@ -3,12 +3,11 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { initializeApp } from 'firebase/app';
-import { firebaseConfig } from '../firebase-config';
+import app from '../firebase-config'; // Ensure this points to your firebaseConfig.js
 import { useNavigation } from '@react-navigation/native';
 
-// Inicializar Firebase
-initializeApp(firebaseConfig);
+// Initialize Firebase Auth
+const auth = getAuth(app);
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -16,11 +15,10 @@ export default function LoginScreen() {
   const navigation = useNavigation();
 
   const handleLogin = () => {
-    const auth = getAuth();
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log('Usuario logueado:', userCredential.user);
-        navigation.navigate('Home');  // Navegar a Home al iniciar sesión correctamente
+        navigation.navigate('HomeScreen');  // Navigate to Home on successful login
       })
       .catch((error) => {
         console.log('Error al iniciar sesión:', error.code);
@@ -36,12 +34,14 @@ export default function LoginScreen() {
         onChangeText={(text) => setEmail(text)}
         style={styles.textInput}
         placeholder="foodbank@gmail.com"
+        value={email} // Add value to keep the input controlled
       />
       <TextInput
         onChangeText={(text) => setPassword(text)}
         style={styles.textInput}
         placeholder="********"
         secureTextEntry
+        value={password} // Add value to keep the input controlled
       />
       <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => Alert.alert('Recuperación de contraseña')}>
         <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
