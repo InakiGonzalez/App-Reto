@@ -10,33 +10,53 @@ const InventoryScreen = ({ navigation }) => {
 
   useEffect(() => {
     const fetchInventory = async () => {
-      const db = getFirestore();
-      const storage = getStorage();
-      const inventoryCollection = collection(db, 'inventory');
-      const inventorySnapshot = await getDocs(inventoryCollection);
-      
-      const inventoryList = await Promise.all(
-        inventorySnapshot.docs.map(async (doc) => {
-          const data = doc.data();
-          const imageRef = ref(storage, data.imageURL);
-          const imageUrl = await getDownloadURL(imageRef);
-
-          return {
-            id: doc.id,
-            name: data.name,
-            description: data.description,
-            quantity: data.quantity,
-            imageUrl: imageUrl,
-          };
-        })
-      );
-
-      setInventory(inventoryList);
-      setFilteredInventory(inventoryList);
+      try {
+        const db = getFirestore();
+        const storage = getStorage();
+        const inventoryCollection = collection(db, 'inventory-item');
+        const inventorySnapshot = await getDocs(inventoryCollection);
+  
+        if (inventorySnapshot.empty) {
+          console.log('No documents found in inventory collection.');
+        }
+  
+        const inventoryList = await Promise.all(
+          inventorySnapshot.docs.map(async (doc) => {
+            const data = doc.data();
+  
+            // Ensure imageURL exists in document data
+            if (!data.imageUrl) {
+              console.log(`Document ${doc.id} missing imageURL field.`);
+              return null;
+            }
+  
+            const imageRef = ref(storage, data.imageUrl);
+            const imageUrl = await getDownloadURL(imageRef);
+  
+            return {
+              id: doc.id,
+              name: data.name,
+              //description: data.description,
+              quantity: data.quantity,
+              imageUrl: imageUrl,
+            };
+          })
+        );
+  
+        // Filter out null entries in case of missing data
+        const filteredInventoryList = inventoryList.filter(item => item !== null);
+  
+        setInventory(filteredInventoryList);
+        setFilteredInventory(filteredInventoryList);
+  
+      } catch (error) {
+        console.error('Error fetching inventory:', error);
+      }
     };
-
+  
     fetchInventory();
   }, []);
+  
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -56,7 +76,6 @@ const InventoryScreen = ({ navigation }) => {
       <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
       <View style={styles.itemTextContainer}>
         <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemDescription}>{item.description}</Text>
       </View>
       <Text style={styles.itemQuantity}>{item.quantity}</Text>
     </View>
@@ -73,14 +92,19 @@ const InventoryScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('AddProductScreen')}>
         <Text style={styles.editButtonText}>Add Product</Text>
       </TouchableOpacity>
-      <FlatList
-        data={filteredInventory}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-      />
+      
+      {filteredInventory.length === 0 ? (
+        <Text style={{ textAlign: 'center', marginTop: 20 }}>No items found.</Text>
+      ) : (
+        <FlatList
+          data={filteredInventory}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
     </View>
-  );
+  );  
 };
 
 export default InventoryScreen;
@@ -131,10 +155,6 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  itemDescription: {
-    fontSize: 14,
-    color: '#555',
   },
   itemQuantity: {
     fontSize: 16,
