@@ -143,10 +143,9 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 //import { initializeApp } from 'firebase/app';
-import app from './firebase-config';
+//import app from './firebase-config';
 //import { getAuth } from 'firebase/auth';
 import Navigation from './Navigation';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 
 //const auth = getAuth(app);

@@ -24,6 +24,19 @@ export default function HomeScreen() {
         </LinearGradient>
       </TouchableOpacity>
 
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('BarcodeScannerScreen')}>
+      <LinearGradient colors={['#E20429', '#FABB01']} style={styles.gradientButton}>
+          <Text style={styles.buttonText}>Escanear</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AccountScreen')}>
+      <LinearGradient colors={['#E20429', '#FABB01']} style={styles.gradientButton}>
+          <Text style={styles.buttonText}>Cuenta</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
+
     </View>
   );
 }
