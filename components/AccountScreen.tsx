@@ -39,8 +39,10 @@ const AccountScreen = () => {
     const auth = getAuth();
     signOut(auth)
       .then(() => {
-        // Navigate to the Login screen after successful logout
-        navigation.navigate('Login');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
       })
       .catch((error) => {
         console.error('Error signing out:', error);

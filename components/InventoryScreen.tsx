@@ -59,6 +59,7 @@ const InventoryScreen = ({ navigation }) => {
             return {
               id: doc.id,
               name: data.name,
+              description: data.description,
               quantity: data.quantity,
               expiration: data.expiration,
               imageUrl: imageUrl,
@@ -109,16 +110,19 @@ const InventoryScreen = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
-      <View style={styles.itemTextContainer}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemQuantity}>{item.quantity}</Text>
-        <Text style={styles.itemExpiration}>
-          Expiration: {item.expiration.toDate().toLocaleDateString()} {/* Format the expiration date */}
-        </Text>
+    <TouchableOpacity onPress={() => navigation.navigate('ProductDetailScreen', { product: item })}>
+      <View style={styles.itemContainer}>
+        <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
+        <View style={styles.itemTextContainer}>
+          <Text style={styles.itemName}>{item.name}</Text>
+          <Text style={styles.itemQuantity}>{item.quantity}</Text>
+          <Text style={styles.itemDescription}>{item.description}</Text>
+          <Text style={styles.itemExpiration}>
+            Expiration: {item.expiration.toDate().toLocaleDateString()}
+          </Text>
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

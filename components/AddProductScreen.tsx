@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { db } from '../firebase-config';
-import { addDoc, collection, Firestore } from 'firebase/firestore';
+import { addDoc, collection } from 'firebase/firestore';
 
 export default function AddProductScreen({ navigation }) {
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [description, setDescription] = useState('');
+  const [expiration, setExpiration] = useState('');
 
   const handleAddProduct = async () => {
     if (name === '' || imageUrl === '' || quantity === '') {
@@ -20,6 +22,9 @@ export default function AddProductScreen({ navigation }) {
         name,
         imageUrl,
         quantity: parseInt(quantity, 10),
+        description,
+        expiration: new Date(expiration),
+
       });
       Alert.alert('Success', 'Product added successfully');
       navigation.goBack();
@@ -49,6 +54,18 @@ export default function AddProductScreen({ navigation }) {
         value={quantity}
         onChangeText={setQuantity}
         keyboardType="numeric"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Description"
+        value={description}
+        onChangeText={setDescription}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Expiration Date (e.g., 2025-01-01T00:00:00)"
+        value={expiration}
+        onChangeText={setExpiration}
       />
       <Button title="Add Product" onPress={handleAddProduct} />
     </View>
