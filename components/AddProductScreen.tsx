@@ -1,6 +1,15 @@
 // src/screens/AddProductScreen.tsx
 import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  StatusBar,
+  Platform,
+} from 'react-native';
 import { db } from '../firebase-config';
 import { addDoc, collection } from 'firebase/firestore';
 
@@ -8,11 +17,9 @@ export default function AddProductScreen({ navigation }) {
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [quantity, setQuantity] = useState('');
-  const [description, setDescription] = useState('');
-  const [expiration, setExpiration] = useState('');
 
   const handleAddProduct = async () => {
-    if (name === '' || imageUrl === '' || quantity === '') {
+    if (name === '' || quantity === '') {
       Alert.alert('Error', 'Please fill all the fields');
       return;
     }
@@ -22,9 +29,6 @@ export default function AddProductScreen({ navigation }) {
         name,
         imageUrl,
         quantity: parseInt(quantity, 10),
-        description,
-        expiration: new Date(expiration),
-
       });
       Alert.alert('Success', 'Product added successfully');
       navigation.goBack();
@@ -36,38 +40,48 @@ export default function AddProductScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Product Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Image URL"
-        value={imageUrl}
-        onChangeText={setImageUrl}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Quantity"
-        value={quantity}
-        onChangeText={setQuantity}
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Expiration Date (e.g., 2025-01-01T00:00:00)"
-        value={expiration}
-        onChangeText={setExpiration}
-      />
-      <Button title="Add Product" onPress={handleAddProduct} />
+      {/* Status Bar Spacer */}
+      <View style={styles.statusBarSpacer} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Agregar Producto</Text>
+      </View>
+
+      {/* Form */}
+      <View style={styles.form}>
+        <Text style={styles.label}>Nombre del Producto</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nombre del producto"
+          value={name}
+          onChangeText={setName}
+        />
+
+        <Text style={styles.label}>URL de la Imagen</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="URL de la imagen"
+          value={imageUrl}
+          onChangeText={setImageUrl}
+        />
+
+        <Text style={styles.label}>Cantidad</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Cantidad"
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="numeric"
+        />
+
+        <TouchableOpacity style={styles.addButton} onPress={handleAddProduct}>
+          <Text style={styles.addButtonText}>Agregar Producto</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -75,15 +89,72 @@ export default function AddProductScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5',
+  },
+  statusBarSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: '#47A025',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#47A025',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+  },
+  backButton: {
+    marginRight: 10,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  form: {
+    flex: 1,
+    padding: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4A4A4A',
+    marginBottom: 5,
   },
   input: {
-    height: 50,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    marginBottom: 12,
-    padding: 10,
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    fontSize: 16,
+    marginBottom: 15,
+    borderColor: '#E0E0E0',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  addButton: {
+    backgroundColor: '#E20429',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

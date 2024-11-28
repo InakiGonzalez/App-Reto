@@ -3,13 +3,14 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   FlatList,
   Image,
   StyleSheet,
   TouchableOpacity,
   Animated,
   Dimensions,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import { getFirestore, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
@@ -18,10 +19,11 @@ const InventoryScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [inventory, setInventory] = useState([]);
   const [filteredInventory, setFilteredInventory] = useState([]);
+  const [expandedProduct, setExpandedProduct] = useState(null);
   const [isSidebarVisible, setSidebarVisible] = useState(false);
 
   const screenWidth = Dimensions.get('window').width;
-  const sidebarWidth = screenWidth * 0.7; // Sidebar covers 70% of the screen width
+  const sidebarWidth = screenWidth * 0.7;
   const sidebarAnimation = useRef(new Animated.Value(-sidebarWidth)).current;
 
   useEffect(() => {
@@ -30,43 +32,36 @@ const InventoryScreen = ({ navigation }) => {
         const db = getFirestore();
         const storage = getStorage();
         const inventoryCollection = collection(db, 'inventory-item');
-    
-        // Example: Fetch items that expire after the current date
+
         const currentDate = new Date();
         const inventorySnapshot = await getDocs(
           query(
             inventoryCollection,
-            where("expiration", ">", currentDate),  // Only fetch items with expiration date after now
-            orderBy("expiration", "asc") // Sort by expiration date
+            where('expiration', '>', currentDate),
+            orderBy('expiration', 'asc')
           )
         );
-    
-        if (inventorySnapshot.empty) {
-          console.log("No inventory items found.");
-        }
-    
+
         const inventoryList = await Promise.all(
           inventorySnapshot.docs.map(async (doc) => {
             const data = doc.data();
-    
             if (!data.imageUrl) {
               return null;
             }
-    
+
             const imageRef = ref(storage, data.imageUrl);
             const imageUrl = await getDownloadURL(imageRef);
-    
+
             return {
               id: doc.id,
               name: data.name,
-              description: data.description,
               quantity: data.quantity,
-              expiration: data.expiration,
-              imageUrl: imageUrl,
+              expiration: data.expiration.toDate(),
+              imageUrl,
             };
           })
         );
-    
+
         const filteredInventoryList = inventoryList.filter((item) => item !== null);
         setInventory(filteredInventoryList);
         setFilteredInventory(filteredInventoryList);
@@ -74,8 +69,6 @@ const InventoryScreen = ({ navigation }) => {
         console.error('Error fetching inventory:', error);
       }
     };
-    
-
     fetchInventory();
   }, []);
 
@@ -109,24 +102,58 @@ const InventoryScreen = ({ navigation }) => {
     }
   };
 
+  const handleExpand = (itemId) => {
+    setExpandedProduct(expandedProduct === itemId ? null : itemId);
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('ProductDetailScreen', { product: item })}>
-      <View style={styles.itemContainer}>
-        <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
-        <View style={styles.itemTextContainer}>
-          <Text style={styles.itemName}>{item.name}</Text>
-          <Text style={styles.itemQuantity}>{item.quantity}</Text>
-          <Text style={styles.itemDescription}>{item.description}</Text>
-          <Text style={styles.itemExpiration}>
-            Expiration: {item.expiration.toDate().toLocaleDateString()}
-          </Text>
-        </View>
+    <TouchableOpacity
+      style={[styles.itemCard, expandedProduct === item.id && styles.expandedCard]}
+      onPress={() => handleExpand(item.id)}
+    >
+      <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemName}>{item.name}</Text>
+        <Text style={styles.itemQuantity}>Cantidad: {item.quantity}</Text>
+        <Text style={styles.itemExpiration}>
+          Caducidad: {item.expiration.toLocaleDateString()}
+        </Text>
       </View>
+      {expandedProduct === item.id && (
+        <View style={styles.expandedSection}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() =>
+              navigation.navigate('EditProductScreen', {
+                product: item,
+              })
+            }
+          >
+            <Text style={styles.editButtonText}>Editar Producto</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
+      {/* Status Bar Spacer */}
+      <View style={styles.statusBarSpacer} />
+
+      {/* Top Bar */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar}>
+          <Text style={styles.menuIcon}>☰</Text>
+        </TouchableOpacity>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar inventario..."
+          value={searchQuery}
+          onChangeText={handleSearch}
+        />
+      </View>
+
       {/* Sidebar */}
       {isSidebarVisible && (
         <Animated.View
@@ -135,38 +162,53 @@ const InventoryScreen = ({ navigation }) => {
             { transform: [{ translateX: sidebarAnimation }] },
           ]}
         >
-          <TouchableOpacity onPress={toggleSidebar}>
-            <Text style={styles.closeSidebar}> > </Text>
+          <TouchableOpacity onPress={toggleSidebar} style={styles.closeButton}>
+            <Text style={styles.closeIcon}>✖</Text>
           </TouchableOpacity>
-          <Button title="Inicio" onPress={() => navigation.navigate('HomeScreen')} />
-          <Button title="Cuenta" onPress={() => navigation.navigate('Account')} />
-          <Button title="Escanear" onPress={() => navigation.navigate('BarcodeScannerScreen')} />
+          <View style={styles.sidebarHeader}>
+            <Image
+              source={require('../assets/file.png')}
+              style={styles.sidebarLogoImage}
+            />
+          </View>
+          {/* Sidebar Navigation Items */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('HomeScreen')}
+            style={styles.sidebarItem}
+          >
+            <Text style={styles.sidebarItemText}>Menú</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('InventoryScreen')}
+            style={styles.sidebarItem}
+          >
+            <Text style={styles.sidebarItemText}>Inventario</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('BarcodeScannerScreen')}
+            style={styles.sidebarItem}
+          >
+            <Text style={styles.sidebarItemText}>Escanear</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AccountScreen')}
+            style={styles.sidebarItem}
+          >
+            <Text style={styles.sidebarItemText}>Cuenta</Text>
+          </TouchableOpacity>
         </Animated.View>
       )}
 
-      {/* Top bar with sidebar toggle and search */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.sidebarToggle} onPress={toggleSidebar}>
-          <Text style={styles.sidebarToggleText}>☰</Text>
-        </TouchableOpacity>
-
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search inventory..."
-          value={searchQuery}
-          onChangeText={handleSearch}
-        />
-      </View>
-
+      {/* Add Product Button */}
       <TouchableOpacity
-        style={styles.editButton}
+        style={styles.addButton}
         onPress={() => navigation.navigate('AddProductScreen')}
       >
-        <Text style={styles.editButtonText}>Add Product</Text>
+        <Text style={styles.addButtonText}>Agregar Producto</Text>
       </TouchableOpacity>
 
       {filteredInventory.length === 0 ? (
-        <Text style={{ textAlign: 'center', marginTop: 20 }}>No items found.</Text>
+        <Text style={styles.emptyMessage}>No se encontraron elementos.</Text>
       ) : (
         <FlatList
           data={filteredInventory}
@@ -182,44 +224,97 @@ const InventoryScreen = ({ navigation }) => {
 export default InventoryScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
+  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  statusBarSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: '#4CAF50',
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  sidebarToggle: {
-    marginRight: 10,
+    backgroundColor: '#4CAF50',
     padding: 10,
-    backgroundColor: '#007BFF',
-    borderRadius: 5,
   },
-  sidebarToggleText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+  menuButton: {
+    marginRight: 10,
   },
-  searchBar: {
+  menuIcon: {
+    color: '#FFFFFF',
+    fontSize: 24,
+  },
+  searchInput: {
     flex: 1,
-    padding: 8,
-    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
     borderRadius: 5,
-    borderColor: '#ddd',
+    paddingHorizontal: 10,
+    fontSize: 16,
+  },
+  listContainer: {
+    padding: 10,
+  },
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  expandedCard: {
+    backgroundColor: '#F9F9F9',
+    paddingBottom: 20,
+  },
+  itemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  itemDetails: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4A4A4A',
+  },
+  itemQuantity: {
+    fontSize: 14,
+    color: '#007BFF',
+  },
+  itemExpiration: {
+    fontSize: 14,
+    color: '#FF0000',
+  },
+  expandedSection: {
+    marginTop: 10,
   },
   editButton: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: '#007BFF',
-    borderRadius: 5,
+    backgroundColor: '#E20429',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
   },
   editButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  addButton: {
+    backgroundColor: '#E20429',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    margin: 10,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   sidebar: {
     position: 'absolute',
@@ -227,42 +322,41 @@ const styles = StyleSheet.create({
     left: 0,
     width: '70%',
     height: '100%',
-    backgroundColor: 'white',
+    backgroundColor: '#4CAF50',
     padding: 20,
     zIndex: 10,
-    elevation: 5,
   },
-  closeSidebar: {
-    marginBottom: 20,
-    fontSize: 18,
-    color: 'red',
+  closeButton: {
+    alignSelf: 'flex-end',
   },
-  listContainer: {
-    paddingBottom: 10,
+  closeIcon: {
+    color: '#FFFFFF',
+    fontSize: 24,
   },
-  itemContainer: {
-    flexDirection: 'row',
+  sidebarHeader: {
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderColor: '#ddd',
+    marginBottom: 20,
   },
-  itemImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 5,
-    marginRight: 10,
+  sidebarLogoImage: {
+    width: 160,
+    height: 155,
   },
-  itemTextContainer: {
-    flex: 1,
+  sidebarItem: {
+    padding: 15,
+    marginVertical: 5,
+    backgroundColor: '#388E3C',
+    borderRadius: 8,
   },
-  itemName: {
+  sidebarItemText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
-  itemQuantity: {
+  emptyMessage: {
+    textAlign: 'center',
+    marginTop: 20,
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#007BFF',
+    color: '#666',
   },
 });

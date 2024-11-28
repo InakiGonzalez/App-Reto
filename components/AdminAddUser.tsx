@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, Text, ActivityIndicator, Alert } from 'react-native';
+import { View, TextInput, Button, Text, ActivityIndicator, Alert, StyleSheet, Platform, ScrollView } from 'react-native';
 import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -62,20 +62,76 @@ export default function AdminAddUser({ navigation }) {
     }
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
+  if (loading) return <ActivityIndicator size="large" color="#4CAF50" style={styles.loader} />;
 
   return (
-    <View>
+    <ScrollView contentContainerStyle={styles.container}>
       {isAdmin ? (
         <>
-          <TextInput placeholder="Email" onChangeText={setEmail} value={email} />
-          <TextInput placeholder="Password" secureTextEntry onChangeText={setPassword} value={password} />
-          <Button title="Add new user" onPress={handleSignUp} />
-          {error ? <Text>{error}</Text> : null}
+          <Text style={styles.title}>Add New User</Text>
+          
+          <TextInput
+            placeholder="Email"
+            style={styles.input}
+            onChangeText={setEmail}
+            value={email}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          <TextInput
+            placeholder="Password"
+            style={styles.input}
+            secureTextEntry
+            onChangeText={setPassword}
+            value={password}
+          />
+          
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          
+          <Button title="Add New User" onPress={handleSignUp} color="#4CAF50" />
         </>
       ) : (
-        <Text>You do not have permission to access this screen.</Text>
+        <Text style={styles.permissionText}>You do not have permission to access this screen.</Text>
       )}
-    </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f8f8',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  errorText: {
+    color: '#FF0000',
+    fontSize: 14,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  loader: {
+    marginTop: 20,
+  },
+  permissionText: {
+    fontSize: 18,
+    color: '#FF0000',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+});
