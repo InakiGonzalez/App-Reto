@@ -69,7 +69,7 @@ const BarcodeScannerScreen = ({ navigation }) => {
       )}
       {/* Optional Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>Back</Text>
+        <Text style={styles.backButtonText}>Atrás</Text>
       </TouchableOpacity>
     </View>
   );

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../firebase-config'; // Asegúrate de que apunte a tu firebase-config.js
@@ -9,21 +9,48 @@ import { auth, db } from '../firebase-config'; // Asegúrate de que apunte a tu 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const navigation = useNavigation();
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Clear fields when logged out
+        setEmail('');
+        setPassword('');
+        setEmployeeId('');
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
   const handleLogin = async () => {
     try {
+      // Attempt to sign in with email and password
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
+  
       console.log('Authenticated User UID:', user.uid);
-
+  
+      // Fetch the user document from Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
-        console.log('Firestore Document Data:', userDoc.data());
-        navigation.navigate('HomeScreen');
+        const userData = userDoc.data();
+        console.log('Firestore Document Data:', userData);
+  
+        // Validate the employee ID entered by the user
+        if (userData?.employeeId === employeeId) {
+          // If employee ID matches, navigate to the home screen
+          navigation.navigate('HomeScreen');
+        } else {
+          // If employee ID doesn't match, show an error
+          Alert.alert('Error', 'Invalid employee ID.');
+        }
       } else {
+        // If no document found for the user
         console.log('No Firestore document found for UID:', user.uid);
+        Alert.alert('Error', 'User not found.');
       }
     } catch (error) {
       console.error('Error logging in:', error.message);
@@ -55,6 +82,16 @@ export default function LoginScreen() {
         secureTextEntry
         value={password}
       />
+            {/* Employee ID Input */}
+        <TextInput
+        onChangeText={(text) => setEmployeeId(text)}
+        style={styles.textInput}
+        placeholder="ID de colaborador"
+        placeholderTextColor="#8e8e8e"
+        secureTextEntry
+        value={employeeId}
+      />
+
       <TouchableOpacity
         style={styles.forgotPasswordButton}
         onPress={() => Alert.alert('Recuperación de contraseña')}

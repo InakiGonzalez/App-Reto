@@ -46,7 +46,7 @@ export default function AddProductScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
+          <Text style={styles.backButtonText}>Atrás</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Agregar Producto</Text>
       </View>

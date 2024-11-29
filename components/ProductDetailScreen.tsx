@@ -1,23 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Image, Alert } from 'react-native';
-import { getFirestore, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 const ProductDetailScreen = ({ route, navigation }) => {
-  const { product } = route.params;
+  const { productId } = route.params; // Now only receiving productId
 
-  // Initialize state for each field
-  const [name, setName] = useState(product.name);
-  const [description, setDescription] = useState(product.description || '');
-  const [expiration, setExpiration] = useState(product.expiration?.toDate().toISOString().split('T')[0]); // Format as YYYY-MM-DD
-  const [quantity, setQuantity] = useState(String(product.quantity));
-  const [imageUrl, setImageUrl] = useState(product.imageUrl);
-  
-  console.log(product);
+  const [product, setProduct] = useState(null); // State to store product data
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [expiration, setExpiration] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [loading, setLoading] = useState(true); // Loading state for fetch
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        if (!productId) {
+          console.log('Product ID is missing');
+          return;
+        }
+
+        const db = getFirestore();
+        const productRef = doc(db, 'inventory-item', productId); // Use the productId to get the product document
+        const productSnapshot = await getDoc(productRef);
+
+        if (productSnapshot.exists()) {
+          const productData = productSnapshot.data();
+          console.log('Product data:', productData); // Log the product data
+          setProduct(productData); // Set the product state
+          setName(productData.name);
+          setDescription(productData.description || '');
+          setExpiration(
+            productData.expiration instanceof Date
+              ? productData.expiration.toISOString().split('T')[0]
+              : productData.expiration?.toDate().toISOString().split('T')[0]
+          );
+          setQuantity(String(productData.quantity));
+          setImageUrl(productData.imageUrl);
+        } else {
+          console.log('No product found');
+          Alert.alert('Error', 'Product not found.');
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        Alert.alert('Error', 'Failed to fetch product data.');
+      } finally {
+        setLoading(false); // Stop loading after fetch attempt
+      }
+    };
+
+    fetchProduct();
+  }, [productId]); // Fetch product only when productId changes
+
+  // If still loading, show a loading state
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  // If no product exists after fetch, show error message
+  if (!product) {
+    return (
+      <View style={styles.container}>
+        <Text>Product not found.</Text>
+      </View>
+    );
+  }
 
   // Save updated product details
   const handleSave = async () => {
     const db = getFirestore();
-    const productRef = doc(db, 'inventory-item', product.id);
+    const productRef = doc(db, 'inventory-item', productId);
 
     try {
       await updateDoc(productRef, {
@@ -38,7 +95,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
   // Delete product
   const handleDelete = async () => {
     const db = getFirestore();
-    const productRef = doc(db, 'inventory-item', product.id);
+    const productRef = doc(db, 'inventory-item', productId);
 
     try {
       await deleteDoc(productRef);
@@ -63,12 +120,13 @@ const ProductDetailScreen = ({ route, navigation }) => {
         placeholder="Name"
       />
 
-      {/* Description Input */}
+      {/* Description Text (Read-Only) */}
       <TextInput
-        style={styles.input}
+        style={[styles.input, styles.descriptionInput]} // Style for description input
         value={description}
         onChangeText={setDescription}
         placeholder="Description"
+        multiline // Allow multi-line input for description
       />
 
       {/* Expiration Date Input */}
@@ -98,8 +156,9 @@ const ProductDetailScreen = ({ route, navigation }) => {
       />
 
       {/* Save and Delete Buttons */}
-      <Button title="Save Changes" onPress={handleSave} />
-      <Button title="Delete Product" onPress={handleDelete} color="red" />
+      <Button title="Guardar Cambios" onPress={handleSave} color="blue" />
+      <View style={styles.buttonSpacing} /> 
+      <Button title="Eliminar Producto" onPress={handleDelete} color="red" />
     </View>
   );
 };
@@ -123,5 +182,26 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
+  },
+  descriptionInput: {
+    height: 100, // Make description input larger for multi-line text
+    textAlignVertical: 'top', // Start text from the top of the input box
+  },
+    button: {
+    // your button styles here
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  saveButton: {
+    backgroundColor: 'green',
+    marginBottom: 15,  // Add space below the "Save changes" button
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

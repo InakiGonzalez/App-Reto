@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, Text, ActivityIndicator, Alert, StyleSheet, Platform, ScrollView } from 'react-native';
+import { View, TextInput, Button, TouchableOpacity, Text, ActivityIndicator, Alert, StyleSheet, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -18,6 +19,7 @@ export default function AdminAddUser({ navigation }) {
       setLoading(true);
       const user = auth.currentUser;
       if (user) {
+        // Fetch user role from Firestore
         const userDoc = await getDoc(doc(firestore, 'users', user.uid));
         if (userDoc.exists() && userDoc.data().role === 'admin') {
           setIsAdmin(true);
@@ -49,9 +51,10 @@ export default function AdminAddUser({ navigation }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
 
+      // Create new user with 'user' role by default
       await setDoc(doc(firestore, 'users', newUser.uid), {
         email: newUser.email,
-        role: 'user',
+        role: 'user', // New users will be created as 'user' role
       });
 
       Alert.alert('Success', 'New user added successfully.');
@@ -68,8 +71,12 @@ export default function AdminAddUser({ navigation }) {
     <ScrollView contentContainerStyle={styles.container}>
       {isAdmin ? (
         <>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+
           <Text style={styles.title}>Add New User</Text>
-          
+
           <TextInput
             placeholder="Email"
             style={styles.input}
@@ -85,9 +92,9 @@ export default function AdminAddUser({ navigation }) {
             onChangeText={setPassword}
             value={password}
           />
-          
+
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          
+
           <Button title="Add New User" onPress={handleSignUp} color="#4CAF50" />
         </>
       ) : (
@@ -101,7 +108,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
-    padding: 20,
+    padding: 30,
   },
   title: {
     fontSize: 24,
@@ -109,6 +116,20 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     marginBottom: 20,
     textAlign: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 30,
+    left: 10,
+    backgroundColor: '#388E3C',
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 1,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   input: {
     backgroundColor: '#fff',

@@ -53,13 +53,13 @@ export default function HomeScreen() {
         {/* Caducidades */}
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={() => navigation.navigate('ExpirationScreen')}
+          onPress={() => navigation.navigate('AdminAddUser')}
         >
           <Image
             source={require('../assets/calendar.jpg')} // Reemplaza con tu ícono de calendario
             style={styles.icon}
           />
-          <Text style={styles.iconButtonText}>Caducidades</Text>
+          <Text style={styles.iconButtonText}>Add User</Text>
         </TouchableOpacity>
 
         {/* Cuenta */}

@@ -11,6 +11,9 @@ const AccountScreen = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [userRole, setUserRole] = useState('');
   const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
 
   // Get the current user details from Firebase Auth
   useEffect(() => {
@@ -43,6 +46,14 @@ const AccountScreen = () => {
     const auth = getAuth();
     signOut(auth)
       .then(() => {
+        // Clear all user-related states
+        setUserInfo(null);
+        setUserRole('');
+        setUserName('');
+        setEmail('');
+        setPassword('');
+        setEmployeeId('');
+        
         // Navigate to the Login screen after successful logout
         navigation.navigate('Login');
       })
@@ -58,8 +69,8 @@ const AccountScreen = () => {
 
       {/* Header with back button */}
       <LinearGradient colors={['#4CAF50', '#4CAF50']} style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={30} color="#FFFFFF" />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>Atrás</Text>
         </TouchableOpacity>
         <Text style={styles.headerText}>Cuenta</Text>
       </LinearGradient>
@@ -113,8 +124,16 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    left: 20,
     top: 30,
+    left: 10,
+    backgroundColor: '#388E3C',
+    padding: 10,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   headerText: {
     color: '#FFFFFF',

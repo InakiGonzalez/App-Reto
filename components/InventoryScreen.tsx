@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
+  ScrollView,
   Text,
   TextInput,
   FlatList,
@@ -21,7 +22,9 @@ const InventoryScreen = ({ navigation }) => {
   const [filteredInventory, setFilteredInventory] = useState([]);
   const [expandedProduct, setExpandedProduct] = useState(null);
   const [isSidebarVisible, setSidebarVisible] = useState(false);
-
+  const [selectedRange, setSelectedRange] = useState('all'); // Holds the selected date range
+  const [selectedFilter, setSelectedFilter] = useState(null);
+  
   const screenWidth = Dimensions.get('window').width;
   const sidebarWidth = screenWidth * 0.7;
   const sidebarAnimation = useRef(new Animated.Value(-sidebarWidth)).current;
@@ -84,6 +87,56 @@ const InventoryScreen = ({ navigation }) => {
       setFilteredInventory(inventory);
     }
   };
+  const filterByDateRange = (range) => {
+    setSelectedRange(range);
+    
+    const currentDate = new Date();
+    let filtered = [];
+  
+    // Map date ranges to days in the future
+    const weeksFromNow = {
+      '0-4': { start: 0, end: 28 },
+      '5-10': { start: 35, end: 70 },
+      '11+': { start: 77 }, // This assumes 11+ weeks means more than 77 days from today
+    };
+  
+    // Check if range exists in mapping
+    const selectedRangeDetails = weeksFromNow[range];
+  
+    if (selectedRangeDetails) {
+      const { start, end } = selectedRangeDetails;
+  
+      filtered = inventory.filter((item) => {
+        const expirationDate = item.expiration;
+        const timeDifference = (expirationDate - currentDate) / (1000 * 3600 * 24); // Convert ms to days
+  
+        // If there's an 'end', filter between start and end; otherwise, just filter after start
+        return end ? (timeDifference >= start && timeDifference <= end) : timeDifference >= start;
+      });
+    } else {
+      // No specific filter selected (show all inventory)
+      filtered = inventory;
+    }
+  
+    setFilteredInventory(filtered);
+  };
+  
+  const handleFilterPress = (filter) => {
+    setSelectedFilter(filter); // Set the selected filter on press
+    filterByDateRange(filter);  // Apply the filter
+  };
+
+
+
+  const clearFilters = () => {
+    setSelectedRange('all'); // Reset selected range filter
+    setFilteredInventory(inventory); // Reset filtered inventory
+  };
+
+
+  const handleClearFilter = () => {
+    setSelectedFilter(null); // Reset the selected filter
+  };
 
   const toggleSidebar = () => {
     if (isSidebarVisible) {
@@ -124,8 +177,8 @@ const InventoryScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.editButton}
             onPress={() =>
-              navigation.navigate('EditProductScreen', {
-                product: item,
+              navigation.navigate('ProductDetailScreen', {
+                productId: item.id, // Pass only the productId
               })
             }
           >
@@ -135,7 +188,7 @@ const InventoryScreen = ({ navigation }) => {
       )}
     </TouchableOpacity>
   );
-
+  
   return (
     <View style={styles.container}>
       {/* Status Bar Spacer */}
@@ -153,6 +206,36 @@ const InventoryScreen = ({ navigation }) => {
           onChangeText={handleSearch}
         />
       </View>
+ 
+     {/* Filter Buttons */}
+     <ScrollView horizontal contentContainerStyle={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterButton, selectedRange === '2-4' && styles.selectedFilter]}
+          onPress={() => handleFilterPress('2-4')}
+        >
+          <Text style={styles.filterText}>2-4 semanas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton,{ width: 120 }, selectedRange === '5-10' && styles.selectedFilter]}
+          onPress={() => handleFilterPress('5-10')}
+        >
+          <Text style={styles.filterText}>5-10 semanas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton,{ width: 120 }, selectedRange === '11+' && styles.selectedFilter]}
+          onPress={() => handleFilterPress('11+')}
+        >
+          <Text style={styles.filterText}>11+ semanas</Text>
+        </TouchableOpacity>
+
+        {/* "Quitar filtro" button */}
+        <TouchableOpacity
+          style={[styles.filterButton, styles.clearFilterButton]} 
+          onPress={clearFilters}
+        >
+          <Text style={styles.filterText}>Quitar filtro</Text>
+        </TouchableOpacity>
+      </ScrollView>
 
       {/* Sidebar */}
       {isSidebarVisible && (
@@ -358,5 +441,41 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#666',
+  },
+  filterContainer: {
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 2,
+  },
+  filterButton: {
+    backgroundColor: '#E20429',
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    margin: 5, // Add a small margin between buttons
+    minWidth: 120, // Ensure each button has a minimum width
+    maxWidth: 120, // Limit the button width so it doesn't grow too large
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0, // Enforce the minimum width
+    flex: 0, // En
+  },
+  selectedFilter: {
+    backgroundColor: '#388E3C',
+  },
+  filterText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  clearFilterButton: {
+    backgroundColor: '#0000FF',  // Same background as other filter buttons
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    margin: 1,
+    justifyContent: 'center',
   },
 });
