@@ -1,4 +1,3 @@
-// src/screens/AddProductScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -17,10 +16,19 @@ export default function AddProductScreen({ navigation }) {
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [description, setDescription] = useState('');
+  const [expiration, setExpiration] = useState(''); // e.g., "2024-12-01"
 
   const handleAddProduct = async () => {
-    if (name === '' || quantity === '') {
+    if (name === '' || quantity === '' || description === '' || expiration === '') {
       Alert.alert('Error', 'Please fill all the fields');
+      return;
+    }
+
+    // Convert expiration to a Firestore-compatible timestamp
+    const expirationDate = new Date(expiration);
+    if (isNaN(expirationDate.getTime())) {
+      Alert.alert('Error', 'Invalid expiration date format. Use YYYY-MM-DD.');
       return;
     }
 
@@ -29,6 +37,11 @@ export default function AddProductScreen({ navigation }) {
         name,
         imageUrl,
         quantity: parseInt(quantity, 10),
+        description,
+        expiration: {
+          seconds: Math.floor(expirationDate.getTime() / 1000),
+          nanoseconds: 0,
+        },
       });
       Alert.alert('Success', 'Product added successfully');
       navigation.goBack();
@@ -59,6 +72,22 @@ export default function AddProductScreen({ navigation }) {
           placeholder="Nombre del producto"
           value={name}
           onChangeText={setName}
+        />
+
+        <Text style={styles.label}>Descripción</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Descripción del producto"
+          value={description}
+          onChangeText={setDescription}
+        />
+
+        <Text style={styles.label}>Fecha de Expiración (YYYY-MM-DD)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Fecha de expiración"
+          value={expiration}
+          onChangeText={setExpiration}
         />
 
         <Text style={styles.label}>URL de la Imagen</Text>

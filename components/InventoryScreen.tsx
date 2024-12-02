@@ -16,6 +16,16 @@ import {
 import { getFirestore, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 
+type Product = {
+  id: string;
+  name: string;
+  description: string;
+  expiration: { seconds: number; nanoseconds: number };
+  imageUrl: string;
+  quantity: number;
+};
+
+
 const InventoryScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [inventory, setInventory] = useState([]);
@@ -24,10 +34,14 @@ const InventoryScreen = ({ navigation }) => {
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [selectedRange, setSelectedRange] = useState('all'); // Holds the selected date range
   const [selectedFilter, setSelectedFilter] = useState(null);
+  const [products, setProducts] = useState<Product[]>([]);
   
   const screenWidth = Dimensions.get('window').width;
   const sidebarWidth = screenWidth * 0.7;
   const sidebarAnimation = useRef(new Animated.Value(-sidebarWidth)).current;
+
+
+
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -35,43 +49,36 @@ const InventoryScreen = ({ navigation }) => {
         const db = getFirestore();
         const storage = getStorage();
         const inventoryCollection = collection(db, 'inventory-item');
-
-        const currentDate = new Date();
-        const inventorySnapshot = await getDocs(
-          query(
-            inventoryCollection,
-            where('expiration', '>', currentDate),
-            orderBy('expiration', 'asc')
-          )
-        );
-
+    
+        const inventorySnapshot = await getDocs(query(inventoryCollection, orderBy('expiration', 'asc')));
+    
         const inventoryList = await Promise.all(
           inventorySnapshot.docs.map(async (doc) => {
             const data = doc.data();
-            if (!data.imageUrl) {
-              return null;
-            }
-
-            const imageRef = ref(storage, data.imageUrl);
-            const imageUrl = await getDownloadURL(imageRef);
-
+            if (!data.imageUrl || !data.expiration) return null;
+    
+            const imageUrl = await getDownloadURL(ref(storage, data.imageUrl)).catch(() => 'default_image_url');
+    
             return {
               id: doc.id,
               name: data.name,
-              quantity: data.quantity,
+              description: data.description,
               expiration: data.expiration.toDate(),
               imageUrl,
+              quantity: data.quantity,
             };
           })
         );
-
-        const filteredInventoryList = inventoryList.filter((item) => item !== null);
+    
+        const filteredInventoryList = inventoryList.filter(Boolean); // Remove nulls
         setInventory(filteredInventoryList);
         setFilteredInventory(filteredInventoryList);
       } catch (error) {
         console.error('Error fetching inventory:', error);
       }
     };
+    
+  
     fetchInventory();
   }, []);
 
@@ -451,7 +458,7 @@ const styles = StyleSheet.create({
   filterButton: {
     backgroundColor: '#E20429',
     borderRadius: 8,
-    paddingVertical: 5,
+    paddingVertical: 10,
     paddingHorizontal: 15,
     margin: 5, // Add a small margin between buttons
     minWidth: 120, // Ensure each button has a minimum width
@@ -473,7 +480,7 @@ const styles = StyleSheet.create({
   clearFilterButton: {
     backgroundColor: '#0000FF',  // Same background as other filter buttons
     borderRadius: 8,
-    paddingVertical: 5,
+    paddingVertical: 10,
     paddingHorizontal: 15,
     margin: 1,
     justifyContent: 'center',
