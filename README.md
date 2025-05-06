@@ -35,7 +35,7 @@ An Android mobile app developed to help RedBAMX (Mexico’s National Network of 
 git clone https://github.com/InakiGonzalez/App-Reto.git
 cd App-Reto
 npm install
-expo start ```
+expo start```
 
 
 
