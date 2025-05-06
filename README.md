@@ -10,6 +10,7 @@ An Android mobile app developed to help RedBAMX (Mexico’s National Network of 
 - ☁️ **Cloud Integration**: Built with Firebase Firestore for real-time database syncing.
 - 🎨 **Responsive UI**: Clean and simple user interface built with React Native and Expo.
 
+
 ## 🛠️ Tech Stack
 
 | Technology | Role |
@@ -35,6 +36,8 @@ git clone https://github.com/InakiGonzalez/App-Reto.git
 cd App-Reto
 npm install
 expo start ```
- 
-# 📜License
+
+
+
+📜License
 This project is under the MIT License.
